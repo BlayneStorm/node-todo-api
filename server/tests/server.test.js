@@ -4,9 +4,21 @@ const request = require("supertest");
 const {app} = require("./../server.js");
 const {Todo} = require("./../models/todo.js");
 
+const todos = [{
+    text: "First test todo"
+}, {
+    text: "Second test todo"
+}];
+
+//insertMany (mongoose method) - takes an array (like the one above) and inserts all of the documents into the collection
 //beforeEach lets us run some code before every single test case, moves on to test cases only after we call done()
 beforeEach((done) => {
+//    Todo.remove({}).then(() => {
+//        done();
+//    }); //this was only for POST, for GET we don't need an empty database
     Todo.remove({}).then(() => {
+        return Todo.insertMany(todos); //return allows us to chain callbacks
+    }).then(() => {
         done();
     });
 });
@@ -27,7 +39,7 @@ describe("POST /todos", () => {
                     return done(err); //return - to stop the function execution
                 }
             
-                Todo.find().then((todos) => {
+                Todo.find({text: text}).then((todos) => {
                     expect(todos.length).toBe(1);
                     expect(todos[0].text).toBe(text);
                     done();
@@ -48,11 +60,23 @@ describe("POST /todos", () => {
                 }
             
                 Todo.find().then((todos) => {
-                    expect(todos.length).toBe(0);
+                    expect(todos.length).toBe(2);
                     done();
                 }).catch((err) => {
                     done(err);
                 });
             }); 
+    });
+});
+
+describe("GET /todos", () => {
+    it("should get all todos", (done) => {
+        request(app)
+            .get("/todos")
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todos.length).toBe(2);
+            })
+            .end(done);
     });
 });
