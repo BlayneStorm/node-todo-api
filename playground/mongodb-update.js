@@ -36,3 +36,5 @@ MongoClient.connect("mongodb://localhost:27017/TodoApp", (err, db) => {
     
     db.close(); //close connection to the MongoDB server
 });
+
+//mongoose - ORM (object relational mapping) - NPM library
