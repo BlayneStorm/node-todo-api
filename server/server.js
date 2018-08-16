@@ -24,6 +24,15 @@ app.post("/todos", (req, res) => {
     });
 });
 
+//GET route - returning all the todos
+app.get("/todos", (req, res) => {
+    Todo.find().then((todos) => {
+        res.send({todos: todos}); //send back an object instead of just the array so it can be useful in the future if we want to add custom status codes and others
+    }, (err) => {
+        res.status(400).send(err);
+    });
+});
+
 app.listen(3000, () => {
     console.log("Started on port 3000");
 });
