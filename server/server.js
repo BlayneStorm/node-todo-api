@@ -12,12 +12,12 @@ app.use(bodyParser.json()); //3rd party middlewear - access smth off of the libr
 //POST route - lets us create new todos (resource creation)
 app.post("/todos", (req, res) => {
     var todo = new Todo({
-        text: req.body.text
+        text: req.body.text //the data we send is an object with a property text
     });
     
-    console.log(req.body);
+    //console.log(req.body);
     
-    todo.save().then((doc) => {
+    todo.save().then((doc) => { //won't save todos that don't respect validators
         res.send(doc);
     }, (err) => {
         res.status(400).send(err);
@@ -27,6 +27,10 @@ app.post("/todos", (req, res) => {
 app.listen(3000, () => {
     console.log("Started on port 3000");
 });
+
+module.exports = {
+    app: app
+};
 
 //__v property is version (keep tracks of various model changes over time) - comes from mongoose
 //body-parser lets us send JSON to the server so it can use it (turns the string body into a JS object) (take the JSON and converts it to an object)
