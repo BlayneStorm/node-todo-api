@@ -7,6 +7,7 @@ var {Todo} = require("./models/todo.js");
 var {User} = require("./models/user.js");
 
 var app = express();
+const port = process.env.PORT || 3000; //this is set if the app is running on heroku
 
 app.use(bodyParser.json()); //3rd party middlewear - access smth off of the library (not custom - which will be a function arg (req, res, next) -> {...}) - with this in place we can now send JSON to our express application
 
@@ -55,8 +56,8 @@ app.get("/todos/:id", (req, res) => {
     });
 });
 
-app.listen(3000, () => {
-    console.log("Started on port 3000");
+app.listen(port, () => {
+    console.log(`Started up at port ${port}`);
 });
 
 module.exports = {

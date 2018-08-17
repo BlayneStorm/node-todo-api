@@ -4,8 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node server/server.js", //tell heroku how to start the project
     "test": "mocha server/**/*.test.js",
     "test-watch": "nodemon --exec \"npm test\""
+  },
+  "engines": {
+    "node": "10.7.0" //tell heroku which version of node we want to use
   },
   "author": "",
   "license": "ISC",
