@@ -39,7 +39,7 @@ app.get("/todos", (req, res) => {
 app.get("/todos/:id", (req, res) => {
     var id = req.params.id;
     
-    //res.send(req.params); //an object with 'id' property
+    //res.send(req.params); //an object with 'id' property (every URL parameter will be stored in req.params object)
     
     if (!ObjectID.isValid(id)) {
         return res.status(404).send({textResponse: "Id invalid"});
@@ -53,6 +53,24 @@ app.get("/todos/:id", (req, res) => {
         res.send({todo: todo}); //id was found in the collection
     }).catch((err) => {
         res.status(400).send(); //request was not valid
+    });
+});
+
+app.delete("/todos/:id", (req, res) => {
+    var id = req.params.id;
+    
+    if (!ObjectID.isValid(id)) {
+        return res.status(404).send({textResponse: "Id invalid"});
+    } //if is not valid we stop the function execution by sending back nothing
+    
+    Todo.findByIdAndRemove(id).then((todo) => {
+        if (!todo) { //call succeeded but id wasn't found in the collection
+            return res.status(404).send({textResponse: "Not found in collection"});
+        }
+        
+        res.send({todo: todo}); //id was found in the collection
+    }).catch((err) => {
+        res.status(400).send({textResponse: "ccvv"}); //request was not valid
     });
 });
 
