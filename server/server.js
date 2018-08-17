@@ -1,6 +1,7 @@
 var express = require("express");
 var bodyParser = require("body-parser");
 
+var {ObjectID} = require("mongodb");
 var {mongoose} = require("./db/mongoose.js");
 var {Todo} = require("./models/todo.js");
 var {User} = require("./models/user.js");
@@ -33,6 +34,27 @@ app.get("/todos", (req, res) => {
     });
 });
 
+//use URL parameter (create an id variable that will be on the req object)
+app.get("/todos/:id", (req, res) => {
+    var id = req.params.id;
+    
+    //res.send(req.params); //an object with 'id' property
+    
+    if (!ObjectID.isValid(id)) {
+        return res.status(404).send("Id invalid");
+    } //if is not valid we stop the function execution by sending back nothing
+
+    Todo.findById(id).then((todo) => {
+        if (!todo) { //call succeeded but id wasn't found in the collection
+            return res.status(404).send("Not found in collection");
+        }
+        
+        res.send({todo: todo}); //id was found in the collection
+    }).catch((err) => {
+        res.status(400).send(); //request was not valid
+    });
+});
+
 app.listen(3000, () => {
     console.log("Started on port 3000");
 });
@@ -42,4 +64,4 @@ module.exports = {
 };
 
 //__v property is version (keep tracks of various model changes over time) - comes from mongoose
-//body-parser lets us send JSON to the server so it can use it (turns the string body into a JS object) (take the JSON and converts it to an object)
+//body-parser lets us send JSON to the server so it can use it (turns the string body into a JS object) (take the JSON and converts it to an object) 
