@@ -1,12 +1,15 @@
 const expect = require("expect");
 const request = require("supertest");
+const {ObjectID} = require("mongodb");
 
 const {app} = require("./../server.js");
 const {Todo} = require("./../models/todo.js");
 
 const todos = [{
+    _id: new ObjectID(),
     text: "First test todo"
 }, {
+    _id: new ObjectID(),
     text: "Second test todo"
 }];
 
@@ -29,7 +32,7 @@ describe("POST /todos", () => {
         
         request(app)
             .post("/todos")
-            .send({text: text}) //send data along with the request as the body, the object arg is gonna be converted into JSON by supertest automatically
+            .send({text: text}) //send data along with the request as the body, the object arg is gonna be converted into JSON by supertest automatically - this is the object that would be in body in postman
             .expect(200)
             .expect((res) => {
                 expect(res.body.text).toBe(text);
@@ -76,6 +79,40 @@ describe("GET /todos", () => {
             .expect(200)
             .expect((res) => {
                 expect(res.body.todos.length).toBe(2);
+            })
+            .end(done);
+    });
+});
+
+describe("GET /todos/:id", () => {
+    it("should return todo doc", (done) => {
+        request(app)
+            .get(`/todos/${todos[0]._id.toHexString()}`) //todos[0]._id is an ObjectID so it needs to be converted to a string to be passed into URL
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe(todos[0].text);
+            })
+            .end(done);
+    });
+    
+    it("should return 404 if todo not found", (done) => {
+        var id = new ObjectID(); //valid ObjectID but not found in db collection
+        
+        request(app)
+            .get(`/todos/${id.toHexString()}`)
+            .expect(404)
+            .expect((res) => {
+                expect(res.body.textResponse).toBe("Not found in collection");
+            })
+            .end(done);
+    });
+    
+    it("should return 404 for non-object ids", (done) => {
+        request(app)
+            .get("/todos/123abc")
+            .expect(404)
+            .expect((res) => {
+                expect(res.body.textResponse).toBe("Id invalid");
             })
             .end(done);
     });

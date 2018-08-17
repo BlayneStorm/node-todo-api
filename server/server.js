@@ -41,12 +41,12 @@ app.get("/todos/:id", (req, res) => {
     //res.send(req.params); //an object with 'id' property
     
     if (!ObjectID.isValid(id)) {
-        return res.status(404).send("Id invalid");
+        return res.status(404).send({textResponse: "Id invalid"});
     } //if is not valid we stop the function execution by sending back nothing
 
     Todo.findById(id).then((todo) => {
         if (!todo) { //call succeeded but id wasn't found in the collection
-            return res.status(404).send("Not found in collection");
+            return res.status(404).send({textResponse: "Not found in collection"});
         }
         
         res.send({todo: todo}); //id was found in the collection
