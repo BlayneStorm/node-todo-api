@@ -1,3 +1,4 @@
+const _ = require("lodash");
 var express = require("express");
 var bodyParser = require("body-parser");
 
@@ -70,7 +71,36 @@ app.delete("/todos/:id", (req, res) => {
         
         res.send({todo: todo}); //id was found in the collection
     }).catch((err) => {
-        res.status(400).send({textResponse: "ccvv"}); //request was not valid
+        res.status(400).send(); //request was not valid
+    });
+});
+
+app.patch("/todos/:id", (req, res) => {
+    var id = req.params.id;
+    
+    //req.body stores all the updates that are going to be made (we only pick what the user is allowed to update with .pick from all of the properties he enters)
+    var body = _.pick(req.body, ["text", "completed"]); //body will be an object
+    
+    if (!ObjectID.isValid(id)) {
+        return res.status(404).send({textResponse: "Id invalid"});
+    } 
+    
+    //everything we set on body is eventually gonna be updated in the model
+    if(_.isBoolean(body.completed) && body.completed) {
+        body.completedAt = new Date().getTime();
+    } else {
+        body.completed = false;
+        body.completedAt = null;
+    }
+    
+    Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+        if (!todo) {
+            return res.status(404).send({textResponse: "Not found in collection"});
+        }
+        
+        res.send({todo: todo});
+    }).catch((err) => {
+        res.status(400).send();
     });
 });
 
