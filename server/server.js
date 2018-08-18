@@ -1,6 +1,8 @@
+require("./config/config.js");
+
 const _ = require("lodash");
-var express = require("express");
-var bodyParser = require("body-parser");
+const express = require("express");
+const bodyParser = require("body-parser");
 
 var {ObjectID} = require("mongodb");
 var {mongoose} = require("./db/mongoose.js");
@@ -8,7 +10,7 @@ var {Todo} = require("./models/todo.js");
 var {User} = require("./models/user.js");
 
 var app = express();
-const port = process.env.PORT || 3000; //this is set if the app is running on heroku
+const port = process.env.PORT; //this is set if the app is running on heroku
 
 app.use(bodyParser.json()); //3rd party middlewear - access smth off of the library (not custom - which will be a function arg (req, res, next) -> {...}) - with this in place we can now send JSON to our express application
 
