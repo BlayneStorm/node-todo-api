@@ -44,7 +44,7 @@ UserSchema.methods.toJSON = function() {
 
 //UserSchema.methods is an object (on which we can add any method we like - instance methods) - instance methods have acces to individual document which is what we need to create the JWT
 UserSchema.methods.generateAuthToken = function() {
-    var user = this;
+    var user = this; //instance methods get called with individual document
     var access = "auth";
     var token = jwt.sign({_id: user._id.toHexString(), access: access}, "abc123").toString();
     
@@ -58,6 +58,26 @@ UserSchema.methods.generateAuthToken = function() {
     });
 };
 
+//model method (not instance) - .statics (not .methods)
+UserSchema.statics.findByToken = function(token) {
+    var User = this; //model methods get called with the model as the 'this' binding
+    var decoded;
+    
+    try {
+        decoded = jwt.verify(token, "abc123"); //throws an error if token value was manipulated or the secret doesn't match the secret with which it was created
+    } catch(err) {
+        return new Promise((resolve, reject) => {
+            reject("Authentication required  (provide valid unmodified token)"); 
+        }); //alternate syntax: return Promise.reject();
+    }
+    
+    //success case - if we're able to succesfully decode the token passed in the header
+    return User.findOne({
+        _id: decoded._id,
+        "tokens.token": token, //query nested document
+        "tokens.access": "auth"       
+    });
+}
 var User = mongoose.model("User", UserSchema);
 
 module.exports = {
