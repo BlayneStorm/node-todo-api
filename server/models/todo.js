@@ -5,7 +5,7 @@ var Todo = mongoose.model("Todo", {
     text: { //specify the details for text atribute (validators)
         type: String,
         required: true,
-        minLength: 1,
+        minlength: 1,
         trim: true //trims out any whitespaces in the beginning and end of the value
     },
     completed: { //specify the details for completed atribute (validators)
