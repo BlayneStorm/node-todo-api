@@ -271,10 +271,10 @@ describe("GET /users/me", () => {
         
         request(app)
             .get("/users/me")
-            .set("x-auth", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1Yjc5OWQ4NDRmNWU0MjQ4NTg1ODlkNmQiLCJhY2Nlc3MiOiJhdXRoIiwiaWF0IjoxNTM0Njk2ODM2fQ.9IahI49z2QwnNnMHE1L62IYDhv1iMGFjbVz6WV1iGlY")
+            .set("x-auth", "non_valid_token")
             .expect(401)
             .expect((res) => {
-                expect(res.body.textResponse).toBe(expectedRes2);
+                expect(res.body.textResponse).toBe(expectedRes);
                 //expect(res.body).toEqual({}); //if nothing comes back
             })
             .end(done);                

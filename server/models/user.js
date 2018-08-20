@@ -47,7 +47,7 @@ UserSchema.methods.toJSON = function() {
 UserSchema.methods.generateAuthToken = function() {
     var user = this; //instance methods get called with individual document
     var access = "auth";
-    var token = jwt.sign({_id: user._id.toHexString(), access: access}, "abc123").toString();
+    var token = jwt.sign({_id: user._id.toHexString(), access: access}, process.env.JWT_SECRET).toString();
     
     user.tokens = user.tokens.concat([{
         access: access,
@@ -76,7 +76,7 @@ UserSchema.statics.findByToken = function(token) {
     var decoded;
     
     try {
-        decoded = jwt.verify(token, "abc123"); //throws an error if token value was manipulated or the secret doesn't match the secret with which it was created
+        decoded = jwt.verify(token, process.env.JWT_SECRET); //throws an error if token value was manipulated or the secret doesn't match the secret with which it was created
     } catch(err) {
         return new Promise((resolve, reject) => {
             reject("Authentication required  (provide valid unmodified token)"); 
