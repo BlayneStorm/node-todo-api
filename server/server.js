@@ -16,9 +16,10 @@ const port = process.env.PORT; //this is set if the app is running on heroku
 app.use(bodyParser.json()); //3rd party middlewear - access smth off of the library (not custom - which will be a function arg (req, res, next) -> {...}) - with this in place we can now send JSON to our express application
 
 //POST route - lets us create new todos (resource creation)
-app.post("/todos", (req, res) => {
+app.post("/todos", authenticate, (req, res) => {
     var todo = new Todo({
-        text: req.body.text //the data we send is an object with a property text
+        text: req.body.text,
+        _creator: req.user._id
     });
     
     //console.log(req.body);
@@ -31,8 +32,10 @@ app.post("/todos", (req, res) => {
 });
 
 //GET route - returning all the todos
-app.get("/todos", (req, res) => {
-    Todo.find().then((todos) => {
+app.get("/todos", authenticate, (req, res) => {
+    Todo.find({
+        _creator: req.user._id //return todos that the user who's logged in created
+    }).then((todos) => {
         res.send({todos: todos}); //send back an object instead of just the array so it can be useful in the future if we want to add custom status codes and others
     }, (err) => {
         res.status(400).send(err);
@@ -40,7 +43,7 @@ app.get("/todos", (req, res) => {
 });
 
 //use URL parameter (create an id variable that will be on the req object)
-app.get("/todos/:id", (req, res) => {
+app.get("/todos/:id", authenticate, (req, res) => {
     var id = req.params.id;
     
     //res.send(req.params); //an object with 'id' property (every URL parameter will be stored in req.params object)
@@ -49,7 +52,10 @@ app.get("/todos/:id", (req, res) => {
         return res.status(404).send({textResponse: "Id invalid"});
     } //if is not valid we stop the function execution by sending back nothing
 
-    Todo.findById(id).then((todo) => {
+    Todo.findOne({
+        _id: id,
+        _creator: req.user._id
+    }).then((todo) => {
         if (!todo) { //call succeeded but id wasn't found in the collection
             return res.status(404).send({textResponse: "Not found in collection"});
         }
@@ -60,14 +66,17 @@ app.get("/todos/:id", (req, res) => {
     });
 });
 
-app.delete("/todos/:id", (req, res) => {
+app.delete("/todos/:id", authenticate, (req, res) => {
     var id = req.params.id;
     
     if (!ObjectID.isValid(id)) {
         return res.status(404).send({textResponse: "Id invalid"});
     } //if is not valid we stop the function execution by sending back nothing
     
-    Todo.findByIdAndRemove(id).then((todo) => {
+    Todo.findOneAndRemove({
+        _id: id,
+        _creator: req.user._id
+    }).then((todo) => {
         if (!todo) { //call succeeded but id wasn't found in the collection
             return res.status(404).send({textResponse: "Not found in collection"});
         }
@@ -78,7 +87,7 @@ app.delete("/todos/:id", (req, res) => {
     });
 });
 
-app.patch("/todos/:id", (req, res) => {
+app.patch("/todos/:id", authenticate, (req, res) => {
     var id = req.params.id;
     
     //req.body stores all the updates that are going to be made (we only pick what the user is allowed to update with .pick from all of the properties he enters)
@@ -96,7 +105,10 @@ app.patch("/todos/:id", (req, res) => {
         body.completedAt = null;
     }
     
-    Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+    Todo.findOneAndUpdate({
+        _id: id, 
+        _creator: req.user._id
+    }, {$set: body}, {new: true}).then((todo) => {
         if (!todo) {
             return res.status(404).send({textResponse: "Not found in collection"});
         }
@@ -123,7 +135,7 @@ app.post("/users", (req, res) => {
     });
 });
 
-//private route
+//private route - add authenticate
 app.get("/users/me", authenticate, (req, res) => {
     res.send(req.user);
 });
