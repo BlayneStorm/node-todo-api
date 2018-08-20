@@ -82,7 +82,7 @@ UserSchema.statics.findByToken = function(token) {
 
 //mongoose middleware - run code before a given event ('save' a doc in our case)
 UserSchema.pre("save", function(next) {
-    var user = this;
+    var user = this; //access the individual document
                
     if (user.isModified("password") === true) {   
         bcrypt.genSalt(10, (err, salt) => {

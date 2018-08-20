@@ -4,29 +4,13 @@ const {ObjectID} = require("mongodb");
 
 const {app} = require("./../server.js");
 const {Todo} = require("./../models/todo.js");
-
-const todos = [{
-    _id: new ObjectID(),
-    text: "First test todo"
-}, {
-    _id: new ObjectID(),
-    text: "Second test todo",
-    completed: true,
-    completedAt: 333
-}];
+const {User} = require("./../models/user.js");
+const {todos, users, populateTodos, populateUsers} = require("./seed/seed.js");
 
 //insertMany (mongoose method) - takes an array (like the one above) and inserts all of the documents into the collection
 //beforeEach lets us run some code before every single test case, moves on to test cases only after we call done()
-beforeEach((done) => {
-//    Todo.remove({}).then(() => {
-//        done();
-//    }); //this was only for POST, for GET we don't need an empty database
-    Todo.remove({}).then(() => {
-        return Todo.insertMany(todos); //return allows us to chain callbacks
-    }).then(() => {
-        done();
-    });
-});
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 describe("POST /todos", () => {
     it("should create a new todo", (done) => {
@@ -201,6 +185,88 @@ describe("PATCH /todos/:id", () => {
                 expect(res.body.todo.completed).toBe(false);
                 expect(res.body.todo.completedAt).toNotExist();
             })
+            .end(done);
+    });
+});
+
+describe("GET /users/me", () => {
+    it("should return user if authenticated", (done) => {
+        request(app)
+            .get("/users/me")
+            .set("x-auth", users[0].tokens[0].token)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body._id).toBe(users[0]._id.toHexString());
+                expect(res.body.email).toBe(users[0].email);
+            })
+            .end(done);
+    });
+    
+    it("should return a 401 if not authenticated", (done) => {
+        var expectedRes = "Authentication required  (provide valid unmodified token)";
+        var expectedRes2 = "No docs match the params specified in user.js";
+        
+        request(app)
+            .get("/users/me")
+            .set("x-auth", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1Yjc5OWQ4NDRmNWU0MjQ4NTg1ODlkNmQiLCJhY2Nlc3MiOiJhdXRoIiwiaWF0IjoxNTM0Njk2ODM2fQ.9IahI49z2QwnNnMHE1L62IYDhv1iMGFjbVz6WV1iGlY")
+            .expect(401)
+            .expect((res) => {
+                expect(res.body.textResponse).toBe(expectedRes2);
+                //expect(res.body).toEqual({}); //if nothing comes back
+            })
+            .end(done);                
+    });
+});
+
+describe("POST /users", () => {
+    it("should create a user", (done) => {
+        var email = "example@example.com";
+        var password = "123baby";
+        
+        request(app)
+            .post("/users")
+            .send({
+                email: email,
+                password: password
+            })
+            .expect(200)
+            .expect((res) => {
+                expect(res.headers["x-auth"]).toExist();
+                expect(res.body._id).toExist();
+                expect(res.body.email).toBe(email);
+            })
+            .end((err) => {
+                if (err) {
+                    return done(err);
+                }
+            
+                User.findOne({email: email}).then((user) => {
+                    expect(user).toExist();
+                    expect(user.password).toNotBe(password); //because it's hashed
+                    done();
+                });
+            });
+    }); //pass in valid data (email + password)
+    
+    it("should return validation errors if request invalid", (done) => {
+        request(app)
+            .post("/users")
+            .send({
+                email: "invalid_email",
+                password: "pass"
+            })
+            .expect(400)
+            .end(done);
+    }); //invalid email or password that's not 6 characters
+    
+    it("should not create user if email in use", (done) => {
+        request(app)
+            .post("/users")
+            .send({
+                email: users[0].email,
+                password: "passy"
+            })
+            .expect(400)
             .end(done);
     });
 });
