@@ -35,7 +35,7 @@ var UserSchema = new mongoose.Schema({
     }]
 });
 
-//determines what exactly gets sent back when a mongoose model is converted into a JSON value (things like password and tokens should not be sent back to the user)
+//determines what exactly gets sent back when a mongoose model is converted into a JSON value (things like password, tokens should not be sent back to the user) - overwrite
 UserSchema.methods.toJSON = function() {
     var user = this;
     var userObject = user.toObject(); //takes the mongoose variable 'user' and converts it into a regular object where only the properties available on the document exist
@@ -69,7 +69,7 @@ UserSchema.statics.findByToken = function(token) {
     } catch(err) {
         return new Promise((resolve, reject) => {
             reject("Authentication required  (provide valid unmodified token)"); 
-        }); //alternate syntax: return Promise.reject();
+        }); //alternate syntax: return Promise.reject(); - this triggers .catch() in authenticate.js
     }
     
     //success case - if we're able to succesfully decode the token passed in the header
@@ -77,6 +77,26 @@ UserSchema.statics.findByToken = function(token) {
         _id: decoded._id,
         "tokens.token": token, //query nested document
         "tokens.access": "auth"       
+    });
+};
+
+UserSchema.statics.findByCredentials = function(email, password) {
+    var User = this;
+    
+    return User.findOne({email: email}).then((user) => {
+        if (!user) {
+            return Promise.reject("No user exists with that email"); //this triggers .catch() in server.js
+        }
+        
+        return new Promise((resolve, reject) => {
+            bcrypt.compare(password, user.password, (err, res) => {
+                if (res === true) {
+                    resolve(user);
+                } else {
+                    reject("Password and hashed password are not matches");
+                }
+            });
+        });
     });
 };
 
